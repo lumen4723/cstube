@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <title>cstube</title>
+</head>
+<body>
+    <div class="container">
+        <div class="item">
+            <div class="controller">
+                <button class="play">▶️</button>
+                <button class="stop">⏹️</button>
+                <button class="next">⏭️</button>
+            </div>
+
+            <table class="qulist">
+                <tr>
+                    <th class="id">id</th>
+                    <th class="title">title</th>
+                    <th class="btn">btn</th>
+                </tr>
+            </table>
+            <form action="/addurl" method="post" class="addurl">
+                <label for="url">
+                    inputURL: <input type="text" name="url" class="input" />
+                </label>
+                <button type="submit">추가</button>
+            </form>
+        </div>
+    
+        <div class="item">
+            <form action="/search" method="get" class="search">
+                <label for="word">
+                    search: <input type="text" name="word" class="input" />
+                </label>
+                <button type="submit">검색</button>
+            </form>
+            <table class="searchlist">
+                <tr>
+                    <th class="id">id</th>
+                    <th class="title">title</th>
+                    <th class="btn">btn</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+</body>
+<script src="index.js"></script>
+</html>
+
+    

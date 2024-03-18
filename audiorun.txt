@@ -1,0 +1,4 @@
+youtube-dl -x --audio-format mp3 -o "queue0.%(ext)s" https://www.youtube.com/watch?v=ZcAqv354JeI
+
+mpg123 queue0.mp3
+

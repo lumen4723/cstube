@@ -1,0 +1,131 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+
+div {
+    padding: 10px;
+}
+
+.item {
+    width: 600px;
+}
+
+.controller {
+    display: flex;
+    justify-content: space-between; /* 버튼을 가운데 정렬 */
+    gap: 10px; /* 버튼 사이의 간격 */
+    padding: 10px; /* 컨트롤러 내부의 패딩 */
+    background-color: #f0f0f0; /* 배경 색상 */
+    width: 200px;
+}
+  
+.controller button {
+    cursor: pointer; /* 마우스 오버 시 포인터 모양 변경 */
+    padding: 8px 16px; /* 내부 패딩 */
+    border: none; /* 테두리 제거 */
+    border-radius: 5px; /* 모서리 둥글게 */
+    font-size: 16px; /* 글꼴 크기 */
+    transition: background-color 0.3s; /* 배경 색상 변경 애니메이션 */
+}
+  
+.controller .play {
+    color: #fff;
+    background-color: #4CAF50; /* 녹색 */
+}
+  
+.controller .stop {
+    color: #fff;
+    background-color: #f44336; /* 빨간색 */
+}
+  
+.controller .next {
+    color: #fff;
+    background-color: #2196F3; /* 파란색 */
+}
+
+button:hover {
+    background-color: #ddd; /* 호버 시 배경 색상 변경 */
+}
+
+/* 폼 스타일 */
+form {
+    width: 580px;
+    padding: 10px;
+    border: 1px solid #ccc; /* 테두리 */
+    border-radius: 5px; /* 테두리 둥글게 */
+    display: flex;
+    flex-direction: column;
+    background-color: #ccc;
+
+}
+  
+/* 라벨 스타일 */
+label {
+    display: block; /* 라벨을 블록 요소로 만들어 줄 바꿈 효과 */
+    width: 100%;
+    margin-bottom: 10px; /* 라벨 아래 마진 */
+}
+  
+/* 입력 필드 스타일 */
+input[type="text"] {
+    width: 80%;
+    padding: 8px; /* 내부 패딩 */
+    margin-top: 5px; /* 입력 필드 위쪽 마진 */
+    border: 1px solid #ccc; /* 테두리 */
+    border-radius: 8px; /* 테두리 둥글게 */
+    align-self: flex-end;
+}
+  
+/* 제출 버튼 스타일 */
+button[type="submit"] {
+    background-color: #4CAF50; /* 배경 색상 */
+    color: white; /* 글씨 색상 */
+    padding: 10px 20px;
+    margin-right: 20px;
+    border: none; /* 테두리 없앰 */
+    border-radius: 8px; /* 테두리 둥글게 */
+    cursor: pointer; /* 마우스 오버 시 커서 변경 */
+    width: 20%;
+    align-self: flex-end;
+}
+
+  
+/* 테이블 스타일 */
+table {
+    width: 100%; /* 테이블 너비를 부모 요소에 맞춤 */
+    border-collapse: collapse; /* 테두리 붕괴로 셀 사이의 간격 제거 */
+    margin-top: 20px; /* 테이블 상단 마진 */
+}
+
+/* 테이블 제목 셀 스타일 */
+th {
+    background-color: #4CAF50; /* 배경 색상 */
+    color: white; /* 글씨 색상 */
+    padding: 10px; /* 내부 패딩 */
+}
+
+/* 테이블 셀 스타일 */
+td {
+    border: 1px solid #ddd; /* 셀 테두리 */
+    padding: 8px; /* 내부 패딩 */
+}
+
+/* 테이블 행 호버 스타일 */
+tr:hover {
+    background-color: #f5f5f5; /* 호버 시 배경 색상 */
+}
+
+.id {
+    width: 30px;
+}
+
+.btn {
+    width: 40px;
+}
+
+.addurl {
+    margin-top: 10px;
+}
