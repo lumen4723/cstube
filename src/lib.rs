@@ -5,9 +5,10 @@ use tokio::fs::File;
 use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
 
 use serde_json::Value;
+use regex::Regex;
+use rand::Rng;
 
 pub async fn download_song(title: &str, url: &str) -> Result<(), std::io::Error> {
-    // let title = rewrite_title(title);
     let output_path = format!("./mp3list/{}.mp3", title);
 
     let status = tokio::process::Command::new("youtube-dl")
@@ -24,7 +25,6 @@ pub async fn download_song(title: &str, url: &str) -> Result<(), std::io::Error>
 }
 
 pub async fn play_song(title: &str) -> Result<(), std::io::Error> {
-    // let title = rewrite_title(title);
     let mp3path = format!("./mp3list/{}.mp3", title);
 
     let status = tokio::process::Command::new("mpg123")
@@ -41,7 +41,6 @@ pub async fn play_song(title: &str) -> Result<(), std::io::Error> {
 }
 
 pub async fn del_song(title: &str) -> Result<(), std::io::Error> {
-    // let title = rewrite_title(title);
     let mp3path = format!("./mp3list/{}.mp3", title);
 
     let status = tokio::process::Command::new("rm")
@@ -106,19 +105,36 @@ pub async fn del_json_to_file(
     }
 }
 
+pub fn is_valid_url(url: String) -> bool {
+    let url_pattern = Regex::new(r#"^https://www\.youtube\.com/watch\?v=[^;&?/|<>'$\s"\\]{11}$"#).unwrap();
+    url_pattern.is_match(&url)
+}
+
+pub fn rewrite_title(title: String) -> String {
+    let special_chars = "\"'\\~!@#$%^&*()/.,:;`,[]{}=_-+|<>?";
+    let mut new_title: String = title.chars()
+        .enumerate()
+        .filter_map(|(idx, ch)| {
+            if idx <= 48 && !special_chars.contains(ch) {
+                Some(ch)
+            }
+            else {
+                None
+            }
+        })
+        .collect();
+
+    if title.chars().count() > 48 {
+        new_title.push_str("...");
+    }
+    
+    new_title.push_str(&format!("{:02}", rand::thread_rng().gen_range(0..100)));
+
+    new_title
+}
+
 pub fn err_to_custom<T>(err: T) -> status::Custom<String> 
     where T: Into<String>
 {
     status::Custom(Status::InternalServerError, err.into())
-}
-
-pub fn is_escape_or_special_char(ch: char) -> bool {
-    ch == '\"' || ch == '\'' || ch == '\\' || ch == '~'
-    || ch == '!' || ch == '@' || ch == '#' || ch == '$'
-    || ch == '%' || ch == '^' || ch == '&' || ch == '*'
-    || ch == '(' || ch == ')' || ch == '/' || ch == '.'
-    || ch == ':' || ch == ';' || ch == '`' || ch == ','
-    || ch == '[' || ch == ']' || ch == '{' || ch == '}'
-    || ch == '=' || ch == '_' || ch == '-' || ch == '+'
-    || ch == '|' || ch == '<' || ch == '>' || ch == '?'
 }

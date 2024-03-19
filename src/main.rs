@@ -20,7 +20,7 @@ use lazy_static::lazy_static;
 use lib:: {
     read_json_from_file, write_json_to_file, del_json_to_file,
     download_song, play_song, stop_song,
-    err_to_custom, is_escape_or_special_char
+    is_valid_url, rewrite_title, err_to_custom
 };
 
 lazy_static! {
@@ -72,31 +72,16 @@ pub async fn search(word: String) -> String {
     let items = body["items"].as_array().unwrap();
 
     let mut result = "[".to_string();
-
     for i in 0..items.len() {
-        let title = items[i]["snippet"]["title"].as_str().unwrap_or("").to_string();
-        let mut char_indices = title.char_indices().peekable();
-
-        let mut title = String::new();
-        while let Some((_idx, ch)) = char_indices.next() {
-            if char_indices.peek().is_some() && char_indices.peek().unwrap().0 > 48 {
-                title.push_str("...");
-                break;
-            }
-            else if !is_escape_or_special_char(ch) {
-                title.push(ch);
-            }
-        }
-        title.push((i as u8 + '0' as u8) as char);
+        let mut title = items[i]["snippet"]["title"].as_str().unwrap_or("").to_string();
+        title = rewrite_title(title);
 
         let video_id = &items[i]["id"]["videoId"].as_str().unwrap_or("");
-
 
         let url = format!("https://www.youtube.com/watch?v={}", video_id);
         result.push_str(&format!("{{\"title\": \"{}\", \"url\": \"{}\"}}", title, url));
         if i < items.len() - 1 {result.push_str(",");}
     }
-    
     result.push_str("]");
     
     result
@@ -106,18 +91,14 @@ pub async fn search(word: String) -> String {
 pub async fn geturl() -> Json<Value> {
     let file_path = "./mp3list/index.json";
 
-    match read_json_from_file(file_path).await {
-        Ok(json) => {
-            return Json(json);
-        },
-        Err(_) => {
-            return Json(Value::Array(vec![]));
-        },
+    return match read_json_from_file(file_path).await {
+        Ok(json) => Json(json),
+        Err(_) => Json(Value::Array(vec![])),
     };
 }
 
 #[post("/url", format = "json", data = "<sdata>")]
-pub async fn addurl(sdata: Json<Song>) -> Result<String, status::Custom<String>> {
+pub async fn addurl(mut sdata: Json<Song>) -> Result<String, status::Custom<String>> {
     let file_path = "./mp3list/index.json";
 
     let mut json = match read_json_from_file(file_path).await {
@@ -125,6 +106,12 @@ pub async fn addurl(sdata: Json<Song>) -> Result<String, status::Custom<String>>
         Err(_) => Value::Array(vec![]),
     };
 
+    if !is_valid_url(sdata.url.clone()) {
+        return Err(err_to_custom("Invaild URL"));
+    }
+
+    sdata.title = rewrite_title(sdata.title.clone());
+    
     if let Some(arr) = json.as_array_mut() {
         let sdata_clone = sdata.clone();
         arr.push(json!(sdata.into_inner()));
@@ -192,9 +179,7 @@ pub async fn play() -> String {
                 if play_song(&title).await.is_ok() {
                     {
                         let is_stopping = IS_STOPPING.lock().await;
-                        if *is_stopping {
-                            break;
-                        }
+                        if *is_stopping { break; }
                     }
 
                     let mut json = json_clone.lock().await;
@@ -243,19 +228,18 @@ pub async fn next() -> String {
                     break;
                 }
                 
-                let mut title = String::new();
                 let _ = del_json_to_file(&file_path_clone, &mut json, 0).await;
-            
+                let mut title = None;
+
                 if let Some(arr) = json.as_array_mut() {
                     if !arr.is_empty() {
-                        title = arr[0]["title"].clone().as_str().unwrap_or_default().to_string();
+                        title = Some(
+                            arr[0]["title"].clone().as_str().unwrap_or_default().to_string()
+                        );
                     }
                 };
-                
-                match write_json_to_file(&file_path_clone, &json).await {
-                    Ok(_) => Some(title),
-                    Err(_) => None,
-                }
+
+                title
             };
         
             if let Some(title) = title {

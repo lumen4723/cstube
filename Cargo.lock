@@ -1123,6 +1123,8 @@ name = "root"
 version = "0.1.0"
 dependencies = [
  "lazy_static",
+ "rand",
+ "regex",
  "reqwest",
  "rocket",
  "serde",
