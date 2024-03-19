@@ -46,9 +46,15 @@ impl Fairing for CORS {
     }
 
     async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
-        response.set_header(rocket::http::Header::new("Access-Control-Allow-Origin", "*"));
-        response.set_header(rocket::http::Header::new("Access-Control-Allow-Methods", "POST, GET, PATCH, OPTIONS"));
-        response.set_header(rocket::http::Header::new("Access-Control-Allow-Headers", "*"));
+        response.set_header(
+            rocket::http::Header::new("Access-Control-Allow-Origin", "*")
+        );
+        response.set_header(
+            rocket::http::Header::new("Access-Control-Allow-Methods", "POST, GET, PATCH, OPTIONS")
+        );
+        response.set_header(
+            rocket::http::Header::new("Access-Control-Allow-Headers", "*")
+        );
     }
 }
 
@@ -145,18 +151,27 @@ pub async fn delurl(idx: usize) -> Result<String, status::Custom<String>> {
 
 #[post("/play")]
 pub async fn play() -> String {
+    {
+        let mut is_playing = IS_PLAYING.lock().await;
+        if *is_playing {
+            return "Already playing. Please wait.".to_string();
+        }
+    
+        *is_playing = true;
+    }
+
     let file_path = "./mp3list/index.json";
-
-    let json = match read_json_from_file(file_path).await {
-        Ok(json) => Arc::new(Mutex::new(json)),
-        Err(_) => Arc::new(Mutex::new(Value::Array(vec![]))),
-    };
-
-    let json_clone = Arc::clone(&json);
-    let file_path_clone = file_path.to_string();
 
     spawn(async move {
         loop {
+            let json = match read_json_from_file(file_path).await {
+                Ok(json) => Arc::new(Mutex::new(json)),
+                Err(_) => Arc::new(Mutex::new(Value::Array(vec![]))),
+            };
+        
+            let json_clone = Arc::clone(&json);
+            let file_path_clone = file_path.to_string();
+
             let title = {
                 let json = json_clone.lock().await;
                 if json.as_array().map(|arr| arr.is_empty()).unwrap_or(true) {
@@ -182,7 +197,11 @@ pub async fn play() -> String {
                         if *is_stopping { break; }
                     }
 
-                    let mut json = json_clone.lock().await;
+                    let json = match read_json_from_file(file_path).await {
+                        Ok(json) => Arc::new(Mutex::new(json)),
+                        Err(_) => Arc::new(Mutex::new(Value::Array(vec![]))),
+                    };
+                    let mut json = json.lock().await;
                     let _ = del_json_to_file(&file_path_clone, &mut json, 0).await;
                     continue;
                 }
@@ -190,6 +209,9 @@ pub async fn play() -> String {
 
             break;
         }
+
+        let mut is_playing = IS_PLAYING.lock().await;
+        *is_playing = false;
     });
 
     "Request received, processing...".to_string()
@@ -210,61 +232,81 @@ pub async fn stop() -> String {
 
 #[post("/next")]
 pub async fn next() -> String {
+    {
+        let mut is_stopping = IS_STOPPING.lock().await;
+        *is_stopping = true;
+    }
+    let _ = stop_song().await;
+    thread::sleep(time::Duration::from_millis(32));
+    {
+        let mut is_stopping = IS_STOPPING.lock().await;
+        *is_stopping = false;
+    }
+
+    {
+        let mut is_playing = IS_PLAYING.lock().await;
+        if *is_playing {
+            return "Already playing. Please wait.".to_string();
+        }
+    
+        *is_playing = true;
+    }
+
     let file_path = "./mp3list/index.json";
 
-    let json = match read_json_from_file(file_path).await {
-        Ok(json) => Arc::new(Mutex::new(json)),
-        Err(_) => Arc::new(Mutex::new(Value::Array(vec![]))),
-    };
-
-    let json_clone = Arc::clone(&json);
-    let file_path_clone = file_path.to_string();
-
     spawn(async move {
+        {
+            let json = match read_json_from_file(file_path).await {
+                Ok(json) => Arc::new(Mutex::new(json)),
+                Err(_) => Arc::new(Mutex::new(Value::Array(vec![]))),
+            };
+
+            let json_clone = Arc::clone(&json);
+            let file_path_clone = file_path.to_string();
+
+            let mut json = json_clone.lock().await;
+            let _ = del_json_to_file(&file_path_clone, &mut json, 0).await;
+        }
+
         loop {
+            let json = match read_json_from_file(file_path).await {
+                Ok(json) => Arc::new(Mutex::new(json)),
+                Err(_) => Arc::new(Mutex::new(Value::Array(vec![]))),
+            };
+            
+            let json_clone = Arc::clone(&json);
+            let file_path_clone = file_path.to_string();
+
             let title = {
-                let mut json = json_clone.lock().await;
+                let json = json_clone.lock().await;
                 if json.as_array().map(|arr| arr.is_empty()).unwrap_or(true) {
                     break;
                 }
-                
-                let _ = del_json_to_file(&file_path_clone, &mut json, 0).await;
-                let mut title = None;
-
-                if let Some(arr) = json.as_array_mut() {
-                    if !arr.is_empty() {
-                        title = Some(
-                            arr[0]["title"].clone().as_str().unwrap_or_default().to_string()
-                        );
-                    }
-                };
-
-                title
+                json.as_array()
+                    .and_then(|arr| arr.get(0))
+                    .and_then(|item| item.get("title"))
+                    .and_then(|title| title.as_str())
+                    .map(ToString::to_string)
             };
         
             if let Some(title) = title {
                 {
                     let mut is_stopping = IS_STOPPING.lock().await;
-                    *is_stopping = true;
-                }
-                let _ = stop_song().await;
-                thread::sleep(time::Duration::from_millis(32));
-        
-                {
-                    let mut is_stopping = IS_STOPPING.lock().await;
                     *is_stopping = false;
                 }
-                
+
                 let _ = IS_PLAYING.lock().await;
                 if play_song(&title).await.is_ok() {
                     {
                         let is_stopping = IS_STOPPING.lock().await;
-                        if *is_stopping {
-                            break;
-                        }
+                        if *is_stopping { break; }
                     }
 
-                    let mut json = json_clone.lock().await;
+                    let json = match read_json_from_file(file_path).await {
+                        Ok(json) => Arc::new(Mutex::new(json)),
+                        Err(_) => Arc::new(Mutex::new(Value::Array(vec![]))),
+                    };
+                    let mut json = json.lock().await;
                     let _ = del_json_to_file(&file_path_clone, &mut json, 0).await;
                     continue;
                 }
@@ -272,6 +314,9 @@ pub async fn next() -> String {
             
             break;
         }
+
+        let mut is_playing = IS_PLAYING.lock().await;
+        *is_playing = false;
     });
 
     "Request received, processing...".to_string()
