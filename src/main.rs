@@ -20,7 +20,7 @@ use lazy_static::lazy_static;
 use lib:: {
     read_json_from_file, write_json_to_file, del_json_to_file,
     download_song, play_song, stop_song,
-    is_valid_url, rewrite_title, err_to_custom
+    is_valid_url, rewrite_title, find_duration, err_to_custom
 };
 
 lazy_static! {
@@ -32,6 +32,7 @@ lazy_static! {
 pub struct Song {
     title: String,
     url: String,
+    duration: i64,
 }
 
 pub struct CORS;
@@ -85,7 +86,7 @@ pub async fn search(word: String) -> String {
         let video_id = &items[i]["id"]["videoId"].as_str().unwrap_or("");
 
         let url = format!("https://www.youtube.com/watch?v={}", video_id);
-        result.push_str(&format!("{{\"title\": \"{}\", \"url\": \"{}\"}}", title, url));
+        result.push_str(&format!("{{\"title\": \"{}\", \"url\": \"{}\", \"duration\": -1}}", title, url));
         if i < items.len() - 1 {result.push_str(",");}
     }
     result.push_str("]");
@@ -112,11 +113,16 @@ pub async fn addurl(mut sdata: Json<Song>) -> Result<String, status::Custom<Stri
         Err(_) => Value::Array(vec![]),
     };
 
-    if !is_valid_url(sdata.url.clone()) {
+    if !is_valid_url(sdata.url.clone()) || sdata.duration != -1 {
         return Err(err_to_custom("Invaild URL"));
     }
 
     sdata.title = rewrite_title(sdata.title.clone());
+
+    sdata.duration = match find_duration(&sdata.url.clone()).await {
+        Ok(x) => x,
+        Err(_) => -1,
+    };
     
     if let Some(arr) = json.as_array_mut() {
         let sdata_clone = sdata.clone();
@@ -125,7 +131,7 @@ pub async fn addurl(mut sdata: Json<Song>) -> Result<String, status::Custom<Stri
         if write_json_to_file(file_path, &json).await.is_err() {
             return Err(err_to_custom("Failed to write to file"));
         }
-
+        
         if let Err(e) = download_song(&sdata_clone.title, &sdata_clone.url).await {
             return Err(err_to_custom(&format!("Failed to download song: {}", e)));
         }

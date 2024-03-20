@@ -1,3 +1,10 @@
+let sec_to_hms = (sec) => {
+    let h = Math.floor(sec / 3600);
+    let m = Math.floor((sec % 3600) / 60);
+    let s = sec % 60;
+    return (h != 0 ? h + ':' : '') + (h != 0 || m != 0 ? m + ':' : '') + s;
+}
+
 let delurl = async (idx) => {
     const fetchPromise = fetch(`http://202.30.32.104/url/${idx}`, {
         method: "DELETE",
@@ -39,6 +46,7 @@ let geturl = async () => {
     .then((res) => res.json())
     .then((datas) => {
         const table = document.querySelector(".qulist");
+        table.querySelectorAll('td').forEach(td => td.remove());
         
         datas.forEach((data, idx) => {
             const tr = document.createElement("tr");
@@ -50,6 +58,10 @@ let geturl = async () => {
             const td_title = document.createElement("td");
             td_title.innerHTML = data.title;
             tr.appendChild(td_title);
+
+            const td_duration = document.createElement("td");
+            td_duration.innerHTML = sec_to_hms(data.duration);
+            tr.appendChild(td_duration);
 
             const btn = document.createElement("button");
             btn.innerHTML = "삭제";
@@ -64,7 +76,10 @@ let geturl = async () => {
     })
 };
 
-geturl();
+window.onload = () => {
+    geturl();
+    setInterval(geturl, 60000);
+}
 
 const form = document.querySelector('.search');
 
@@ -113,7 +128,6 @@ playbtn.addEventListener('click', async() => {
             "Content-Type": "application/json",
         },
     })
-    // .then(() => {}) // 끝나는 시간을 알면 자동으로 리다이렉트
     .catch(error => console.error('Error:', error));
 });
 

@@ -7,6 +7,26 @@ use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
 use serde_json::Value;
 use regex::Regex;
 use rand::Rng;
+use glob::glob;
+use std::fs;
+
+pub async fn find_duration(url: &str) -> Result<i64, std::io::Error> {
+    let metadata_output = tokio::process::Command::new("youtube-dl")
+        .args(&["-j", url])
+        .output()
+        .await?;
+
+    if !metadata_output.status.success() {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "Failed to get metadata"));
+    }
+
+    let metadata_str = String::from_utf8_lossy(&metadata_output.stdout).to_string();
+
+    Ok(
+        serde_json::from_str::<Value>(&metadata_str).unwrap()
+            .get("duration").and_then(Value::as_i64).unwrap_or(0)
+    )
+}
 
 pub async fn download_song(title: &str, url: &str) -> Result<(), std::io::Error> {
     let output_path = format!("./mp3list/{}.mp3", title);
@@ -41,19 +61,20 @@ pub async fn play_song(title: &str) -> Result<(), std::io::Error> {
 }
 
 pub async fn del_song(title: &str) -> Result<(), std::io::Error> {
-    let mp3path = format!("./mp3list/{}.mp3", title);
+    let pattern = format!("./mp3list/{}.*", title);
 
-    let status = tokio::process::Command::new("rm")
-        .args(&[mp3path])
-        .status()
-        .await?;
+    for entry in glob(&pattern).expect("Failed to read glob pattern") {
+        match entry {
+            Ok(path) => {
+                if let Err(e) = fs::remove_file(path) {
+                    return Err(e);
+                }
+            },
+            Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
+        }
+    }
 
-    if status.success() {
-        Ok(())
-    }
-    else {
-        Err(std::io::Error::new(std::io::ErrorKind::Other, "rm command failed"))
-    }
+    Ok(())
 }
 
 pub async fn stop_song() -> Result<(), std::io::Error> {

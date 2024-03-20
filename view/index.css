@@ -50,7 +50,6 @@ button:hover {
     background-color: #ddd; /* 호버 시 배경 색상 변경 */
 }
 
-/* 폼 스타일 */
 form {
     width: 580px;
     padding: 10px;
@@ -61,15 +60,13 @@ form {
     background-color: #ccc;
 
 }
-  
-/* 라벨 스타일 */
+
 label {
     display: block; /* 라벨을 블록 요소로 만들어 줄 바꿈 효과 */
     width: 100%;
     margin-bottom: 10px; /* 라벨 아래 마진 */
 }
-  
-/* 입력 필드 스타일 */
+
 input[type="text"] {
     width: 80%;
     padding: 8px; /* 내부 패딩 */
@@ -78,8 +75,7 @@ input[type="text"] {
     border-radius: 8px; /* 테두리 둥글게 */
     align-self: flex-end;
 }
-  
-/* 제출 버튼 스타일 */
+
 button[type="submit"] {
     background-color: #4CAF50; /* 배경 색상 */
     color: white; /* 글씨 색상 */
@@ -92,34 +88,34 @@ button[type="submit"] {
     align-self: flex-end;
 }
 
-  
-/* 테이블 스타일 */
 table {
     width: 100%; /* 테이블 너비를 부모 요소에 맞춤 */
     border-collapse: collapse; /* 테두리 붕괴로 셀 사이의 간격 제거 */
     margin-top: 20px; /* 테이블 상단 마진 */
 }
 
-/* 테이블 제목 셀 스타일 */
 th {
     background-color: #4CAF50; /* 배경 색상 */
     color: white; /* 글씨 색상 */
     padding: 10px; /* 내부 패딩 */
 }
 
-/* 테이블 셀 스타일 */
 td {
     border: 1px solid #ddd; /* 셀 테두리 */
     padding: 8px; /* 내부 패딩 */
+    text-align: center;
 }
 
-/* 테이블 행 호버 스타일 */
 tr:hover {
     background-color: #f5f5f5; /* 호버 시 배경 색상 */
 }
 
 .id {
-    width: 30px;
+    width: 20px;
+}
+
+.duration {
+    width: 60px;
 }
 
 .btn {
