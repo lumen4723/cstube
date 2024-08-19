@@ -2,3 +2,6 @@ youtube-dl -x --audio-format mp3 -o "queue0.%(ext)s" https://www.youtube.com/wat
 
 mpg123 queue0.mp3
 
+사운드 카드에 문제가 생기면
+sudo alsactl init
+sudo aplay -l

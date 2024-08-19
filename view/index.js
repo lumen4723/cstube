@@ -6,7 +6,7 @@ let sec_to_hms = (sec) => {
 }
 
 let delurl = async (idx) => {
-    const fetchPromise = fetch(`http://202.30.32.104/url/${idx}`, {
+    const fetchPromise = fetch(`http://music.cs.oppspark.net/url/${idx}`, {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",
@@ -21,7 +21,7 @@ let delurl = async (idx) => {
 };
 
 let addurl = async (data) => {
-    const fetchPromise = fetch("http://202.30.32.104/url", {
+    const fetchPromise = fetch("http://music.cs.oppspark.net/url", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -37,7 +37,7 @@ let addurl = async (data) => {
 };
 
 let geturl = async () => {
-    await fetch("http://202.30.32.104/url", {
+    await fetch("http://music.cs.oppspark.net/url", {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
@@ -122,7 +122,7 @@ form.addEventListener('submit', (e) => {
 const playbtn = document.querySelector('.play');
 
 playbtn.addEventListener('click', async() => {
-    await fetch("http://202.30.32.104/play", {
+    await fetch("http://music.cs.oppspark.net/play", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -134,7 +134,7 @@ playbtn.addEventListener('click', async() => {
 const stopbtn = document.querySelector('.stop');
 
 stopbtn.addEventListener('click', async() => {
-    await fetch("http://202.30.32.104/stop", {
+    await fetch("http://music.cs.oppspark.net/stop", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -146,7 +146,7 @@ stopbtn.addEventListener('click', async() => {
 const nextbtn = document.querySelector('.next');
 
 nextbtn.addEventListener('click', async() => {
-    await fetch("http://202.30.32.104/next", {
+    await fetch("http://music.cs.oppspark.net/next", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
